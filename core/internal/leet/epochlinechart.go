@@ -183,6 +183,9 @@ type EpochLineChart struct {
 	// title is the metric name shown in the chart header.
 	title string
 
+	// stepMetric is the metric plotted on the x-axis, or "" for _step.
+	stepMetric string
+
 	// dirty marks the chart as needing a redraw on the next DrawIfNeeded call.
 	dirty bool
 
@@ -404,10 +407,16 @@ func (c *EpochLineChart) updateRanges() {
 		dataXMax = 0
 	}
 	niceMax := dataXMax
-	if niceMax < defaultMaxX {
+	switch {
+	case c.stepMetric != "":
+		// Custom axes fit the data.
+		if niceMax <= dataXMin {
+			niceMax = dataXMin + 1
+		}
+	case niceMax < defaultMaxX:
 		// Keep a decent default domain early in a run.
 		niceMax = defaultMaxX
-	} else {
+	default:
 		// Round to nearest 10.
 		niceMax = float64(((int(math.Ceil(niceMax)) + 9) / 10) * 10)
 	}
@@ -1003,6 +1012,16 @@ func (c *EpochLineChart) DrawIfNeeded() {
 // Title returns the chart title.
 func (c *EpochLineChart) Title() string {
 	return c.title
+}
+
+// SetStepMetric sets the metric plotted on the x-axis.
+func (c *EpochLineChart) SetStepMetric(name string) {
+	c.stepMetric = name
+}
+
+// StepMetric returns the metric plotted on the x-axis, or "" for _step.
+func (c *EpochLineChart) StepMetric() string {
+	return c.stepMetric
 }
 
 // SetFocused sets the chart's focus state.

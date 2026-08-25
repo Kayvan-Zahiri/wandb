@@ -14,6 +14,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/wandb/wandb/core/internal/observability"
+	"github.com/wandb/wandb/core/internal/runmetric"
 	spb "github.com/wandb/wandb/core/pkg/service_go_proto"
 )
 
@@ -25,6 +26,10 @@ type LevelDBHistorySource struct {
 
 	// store is a W&B LevelDB-style transaction log that may be actively written.
 	store *LiveStore
+	// metricHandler accumulates define_metric records to resolve custom
+	// x-axes. Definitions apply only to later history records; points
+	// parsed before a definition arrives stay on the default axis.
+	metricHandler *runmetric.MetricHandler
 	// exitSeen is true if the exit record has been seen.
 	exitSeen bool
 	// exitCode is the exit code of the run if the exit record has been seen.
@@ -42,8 +47,9 @@ func NewLevelDBHistorySource(
 		return nil, err
 	}
 	return &LevelDBHistorySource{
-		runPath: runPath,
-		store:   store,
+		runPath:       runPath,
+		store:         store,
+		metricHandler: runmetric.New(),
 	}, nil
 }
 
@@ -176,8 +182,11 @@ func (hs *LevelDBHistorySource) recordToMsg(record *spb.Record) tea.Msg {
 			msg.StartTime = ts.AsTime()
 		}
 		return msg
+	case *spb.Record_Metric:
+		_ = hs.metricHandler.ProcessRecord(rec.Metric)
+		return nil
 	case *spb.Record_History:
-		return ParseHistory(hs.runPath, rec.History)
+		return ParseHistory(hs.runPath, rec.History, hs.metricHandler)
 	case *spb.Record_Stats:
 		return ParseStats(hs.runPath, rec.Stats)
 	case *spb.Record_Summary:
@@ -202,7 +211,13 @@ func (hs *LevelDBHistorySource) Close() {
 }
 
 // ParseHistory extracts metrics and media from a history record.
-func ParseHistory(runPath string, history *spb.HistoryRecord) tea.Msg {
+//
+// metricHandler resolves custom x-axes and must be non-nil.
+func ParseHistory(
+	runPath string,
+	history *spb.HistoryRecord,
+	metricHandler *runmetric.MetricHandler,
+) tea.Msg {
 	if history == nil {
 		return nil
 	}
@@ -241,20 +256,31 @@ func ParseHistory(runPath string, history *spb.HistoryRecord) tea.Msg {
 			}
 			continue
 		}
-		if strings.HasPrefix(key, "_") {
-			continue
-		}
 		if val, err := strconv.ParseFloat(v, 64); err == nil {
 			values[key] = val
 		}
 	}
 
 	metrics := make(map[string]MetricData, len(values))
-	if len(values) > 0 {
-		x := []float64{float64(step)}
-		for k, y := range values {
-			metrics[k] = MetricData{X: x, Y: []float64{y}}
+	stepX := []float64{float64(step)}
+	for k, y := range values {
+		if strings.HasPrefix(k, "_") {
+			continue
 		}
+		stepMetric := metricHandler.StepMetric(k)
+		if stepMetric == "_step" {
+			stepMetric = ""
+		}
+		x := stepX
+		if stepMetric != "" {
+			// Rows without a finite x value are not plotted, as in the UI.
+			sx, ok := values[stepMetric]
+			if !ok || !isFinite(sx) {
+				continue
+			}
+			x = []float64{sx}
+		}
+		metrics[k] = MetricData{X: x, Y: []float64{y}, StepMetric: stepMetric}
 	}
 
 	media := parseHistoryMedia(runPath, step, mediaFieldsByKey)

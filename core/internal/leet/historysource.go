@@ -74,6 +74,7 @@ func concatenateHistory(messages []HistoryMsg, runPath string) HistoryMsg {
 			existing := h.Metrics[metricName]
 			existing.X = append(existing.X, data.X...)
 			existing.Y = append(existing.Y, data.Y...)
+			existing.StepMetric = data.StepMetric
 			h.Metrics[metricName] = existing
 		}
 		for mediaKey, points := range msg.Media {

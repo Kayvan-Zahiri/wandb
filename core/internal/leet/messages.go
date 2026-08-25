@@ -11,6 +11,9 @@ import (
 type MetricData struct {
 	X []float64
 	Y []float64
+
+	// StepMetric is the metric whose values X holds, or "" for _step.
+	StepMetric string
 }
 
 // HistoryMsg contains metrics data from a wandb history record.
