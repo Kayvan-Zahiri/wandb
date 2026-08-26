@@ -16,7 +16,7 @@ Section headings should be at level 3 (e.g. `### Added`).
 
 ### Added
 
-- The automations API now supports sending a prompt to ARIA (`SendPromptToAria`) as an automation action.
+- The automations API now supports sending a prompt to ARIA (`SendPromptToAria`) as an automation action. Listing keeps other automations on the page when the server returns an action, event, or scope type this SDK version does not model (`SavedUnknownAction`, `SavedUnknownEvent`).
 
 ### Deprecated
 
