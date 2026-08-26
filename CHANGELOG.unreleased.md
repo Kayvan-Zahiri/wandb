@@ -14,6 +14,10 @@ Section headings should be at level 3 (e.g. `### Added`).
 
 ## Unreleased
 
+### Added
+
+- The automations API now supports sending a prompt to ARIA (`SendPromptToAria`) as an automation action.
+
 ### Deprecated
 
 - `wandb.sandbox` is deprecated and will be removed in a future release. Use the `cwsandbox` package directly instead.
