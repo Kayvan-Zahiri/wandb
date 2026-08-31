@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import wandb
 from wandb import util
-from wandb.analytics import TelemetryRecorder, get_sentry
+from wandb.analytics import TelemetryRecorder
 from wandb.analytics.opentelemetry.opentelemetry_proxy import OpenTelemetryProxy
 from wandb.errors import CommError, UsageError
 from wandb.errors.util import ProtobufErrorHandler
@@ -42,7 +42,6 @@ from wandb.sdk.lib import (
     retry,
     telemetry,
 )
-from wandb.sdk.lib.proto_util import message_to_dict
 
 if TYPE_CHECKING:
     from wandb.proto.wandb_internal_pb2 import (
@@ -1072,14 +1071,6 @@ class SendManager:
             "output.log",
             file_stream.CRDedupeFilePolicy(start_chunk_id=self._resume_state.output),
         )
-
-        # hack to merge run_settings and self._settings object together
-        # so that fields like entity or project are available to be attached to Sentry events.
-        run_settings = message_to_dict(self._run)
-        _settings = dict(self._settings)
-        _settings.update(run_settings)
-        get_sentry().configure_scope(tags=_settings, process_context="internal")
-
         self._fs.start()
         self._pusher = FilePusher(self._api, self._fs, settings=self._settings)
         self._dir_watcher = DirWatcher(self._settings, self._pusher, file_dir)
@@ -1561,7 +1552,6 @@ class SendManager:
         if self._fs:
             self._fs.finish(self._exit_code)
             self._fs = None
-        get_sentry().end_session()
 
     def _max_cli_version(self) -> str | None:
         server_info = self.get_server_info()
