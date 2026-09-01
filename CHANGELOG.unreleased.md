@@ -14,6 +14,10 @@ Section headings should be at level 3 (e.g. `### Added`).
 
 ## Unreleased
 
+### Added
+
+- Added `wandb sweep-scheduler`, which runs a sweep's search locally while wandb-core drives the runs, so you can plug in your own optimizer (@kmikowicz in https://github.com/wandb/wandb/pull/12560)
+
 ### Deprecated
 
 - `wandb.sandbox` is deprecated and will be removed in a future release. Use the `cwsandbox` package directly instead.
