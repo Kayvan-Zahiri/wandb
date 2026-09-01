@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+
 	"github.com/wandb/wandb/core/internal/analytics"
 	"github.com/wandb/wandb/core/internal/monitor"
 	"github.com/wandb/wandb/core/internal/observability"
@@ -128,7 +130,7 @@ func NewServer(params ServerParams) *Server {
 
 	sweepSchedLogger := observability.NewCoreLogger(
 		slog.Default(),
-		nil,
+		observability.NewSentryContext(sentry.CurrentHub()),
 		analytics.NewTelemetryRecorder(
 			nil,
 			analytics.NewTelemetryContext(),
