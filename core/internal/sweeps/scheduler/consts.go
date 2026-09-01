@@ -1,5 +1,14 @@
 package scheduler
 
-// historySampleCount is how many sampled history rows each run's metric
-// history is downsampled to for the optimizer.
-const historySampleCount = 20
+const (
+	// runsPageSize is how many runs one poll page requests.
+	runsPageSize = 200
+
+	// warmStartPageSize is how many runs one warm-start page requests,
+	// bounding the batch of prior runs the optimizer ingests at a time.
+	warmStartPageSize = 100
+
+	// historySampleCount is how many sampled history rows each run's
+	// metric history is downsampled to for the optimizer.
+	historySampleCount = 20
+)
