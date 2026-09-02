@@ -22,6 +22,30 @@ def test_sync_with_tensorboard(wandb_backend_spy, runner, copy_asset):
             assert value > 0
 
 
+@pytest.mark.parametrize(
+    ("resume", "expect_warning"),
+    [("must", True), (None, False)],
+)
+def test_legacy_sync_ignores_offline_resume(
+    wandb_backend_spy,
+    runner,
+    resume,
+    expect_warning,
+):
+    """Legacy sync warns that it cannot honor an offline resume intent."""
+    with wandb.init(mode="offline", resume=resume) as run:
+        run.log({"x": 1})
+
+    result = runner.invoke(cli.sync, [run.settings.sync_dir, "--legacy"])
+
+    assert result.exit_code == 0
+    assert ("Ignoring `resume` setting" in result.output) is expect_warning
+
+    # The run still syncs; the resume intent is dropped, not fatal.
+    with wandb_backend_spy.freeze() as snapshot:
+        assert snapshot.history(run_id=run.id)[0]["x"] == 1
+
+
 def test_legacy_sync_assigns_monotonic_steps(wandb_backend_spy, runner):
     with wandb.init(mode="offline") as run:
         run.log({"loss": 0.1})
