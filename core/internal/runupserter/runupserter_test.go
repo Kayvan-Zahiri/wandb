@@ -342,10 +342,11 @@ func TestResume_InitializesSyncStateStartingStep(t *testing.T) {
 
 	run := &spb.RunRecord{}
 	upserter.FillRunRecord(run)
-	assert.EqualValues(t, 5, run.StartingStep)
+	// The backend reports _step=5, so the resumed run starts at step 6.
+	assert.EqualValues(t, 6, run.StartingStep)
 	startingStep, err := params.SyncStateStore.GetOrInitStartingStep(0)
 	require.NoError(t, err)
-	assert.EqualValues(t, 5, startingStep)
+	assert.EqualValues(t, 6, startingStep)
 }
 
 func TestResume_ReusesSyncStateStartingStep(t *testing.T) {
