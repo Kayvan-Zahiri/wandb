@@ -14,6 +14,10 @@ Section headings should be at level 3 (e.g. `### Added`).
 
 ## Unreleased
 
+### Changed
+
+- System metrics from Apple Silicon Macs become available about 1.5 seconds sooner after monitoring starts (@dmitryduev in https://github.com/wandb/wandb/pull/12679)
+
 ### Deprecated
 
 - `wandb.sandbox` is deprecated and will be removed in a future release. Use the `cwsandbox` package directly instead.
